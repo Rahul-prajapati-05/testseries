@@ -17,7 +17,8 @@ import {
   Check,
   X,
   ListOrdered,
-  Search
+  Search,
+  Share2
 } from "lucide-react";
 import { extractTextFromPdf, parseQuestionsFromText, getSampleQuestionPaperText } from "../../utils/pdfParser";
 
@@ -29,6 +30,7 @@ export default function AdminPanel({
   onUpdateTest,
   onDeleteTest,
   onResetDefaults,
+  onShareTest,
   showToast,
 }) {
   const activeTest = tests.find((t) => t.id === activeTestId) || tests[0];
@@ -318,6 +320,17 @@ export default function AdminPanel({
           </div>
 
           <div className="admin-header-actions">
+            {activeTest && (
+              <button
+                type="button"
+                className="btn-share-test-header"
+                onClick={() => onShareTest(activeTest)}
+                title="Send direct test link to students on WhatsApp"
+              >
+                <Share2 size={16} />
+                <span>Share Test Link</span>
+              </button>
+            )}
             <button
               type="button"
               className="btn-create-test"

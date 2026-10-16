@@ -7,10 +7,12 @@ import {
   FileQuestion,
   Play,
   PlusCircle,
-  AlertCircle
+  AlertCircle,
+  Share2,
+  Download
 } from "lucide-react";
 
-export default function TestList({ tests, onStartTest, onGoToAdmin }) {
+export default function TestList({ tests, onStartTest, onGoToAdmin, onShareTest, onOpenImport }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
@@ -77,15 +79,26 @@ export default function TestList({ tests, onStartTest, onGoToAdmin }) {
         <div className="section-title-row">
           <div>
             <h2 className="catalog-title">Available Mock Tests ({filteredTests.length})</h2>
-            <p className="catalog-subtitle">Select any mock test to assess your readiness and performance</p>
+            <p className="catalog-subtitle">Select any mock test to assess your readiness, or import a shared test</p>
           </div>
-          <button
-            type="button"
-            className="btn-admin-cta"
-            onClick={onGoToAdmin}
-          >
-            + Create New Test in Admin
-          </button>
+          <div className="catalog-action-buttons">
+            <button
+              type="button"
+              className="btn-outline-small"
+              onClick={onOpenImport}
+              title="Import a test code or link sent by your teacher"
+            >
+              <Download size={16} />
+              <span>Import Test by Code</span>
+            </button>
+            <button
+              type="button"
+              className="btn-admin-cta"
+              onClick={onGoToAdmin}
+            >
+              + Create New Test in Admin
+            </button>
+          </div>
         </div>
 
         {filteredTests.length === 0 ? (
@@ -147,26 +160,38 @@ export default function TestList({ tests, onStartTest, onGoToAdmin }) {
                   </div>
 
                   <div className="test-card-footer">
-                    {hasQuestions ? (
+                    <div className="card-footer-buttons">
+                      {hasQuestions ? (
+                        <button
+                          type="button"
+                          className="btn-start-test flex-1"
+                          onClick={() => onStartTest(test)}
+                        >
+                          <Play size={16} fill="currentColor" />
+                          <span>Start Test</span>
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn-start-test btn-add-questions-cta flex-1"
+                          onClick={onGoToAdmin}
+                          title="Go to Admin Panel to add questions to this test"
+                        >
+                          <PlusCircle size={16} />
+                          <span>Add Questions</span>
+                        </button>
+                      )}
+
                       <button
                         type="button"
-                        className="btn-start-test"
-                        onClick={() => onStartTest(test)}
+                        className="btn-card-share"
+                        onClick={() => onShareTest(test)}
+                        title="Share this test link directly with students on WhatsApp"
                       >
-                        <Play size={16} fill="currentColor" />
-                        <span>Start Test</span>
+                        <Share2 size={16} />
+                        <span>Share</span>
                       </button>
-                    ) : (
-                      <button
-                        type="button"
-                        className="btn-start-test btn-add-questions-cta"
-                        onClick={onGoToAdmin}
-                        title="Go to Admin Panel to add questions to this test"
-                      >
-                        <PlusCircle size={16} />
-                        <span>Add Questions in Admin</span>
-                      </button>
-                    )}
+                    </div>
                   </div>
                 </div>
               );

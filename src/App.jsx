@@ -6,11 +6,14 @@ import TestList from "./components/Student/TestList";
 import ExamRoom from "./components/Student/ExamRoom";
 import TestResult from "./components/Student/TestResult";
 import HelpModal from "./components/HelpModal";
+import ShareModal from "./components/ShareModal";
+import ImportModal from "./components/ImportModal";
 import {
   INITIAL_TESTS,
   getStoredTests,
   saveStoredTests,
 } from "./data/mockData";
+import { getSharedTestFromUrl, cleanShareUrl } from "./utils/shareHelper";
 
 export default function App() {
   const [tests, setTests] = useState(() => getStoredTests());
@@ -24,46 +27,73 @@ export default function App() {
   const [activeExamTest, setActiveExamTest] = useState(null);
   const [examResult, setExamResult] = useState(null);
 
-  // Toast Notification state
+  // Modals state
   const [toast, setToast] = useState(null);
   const [showHelpModal, setShowHelpModal] = useState(false);
+  const [shareModalTest, setShareModalTest] = useState(null);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const showToast = useCallback((message, type = "info") => {
     setToast({ message, type });
     setTimeout(() => {
       setToast((prev) => (prev?.message === message ? null : prev));
-    }, 4000);
+    }, 4500);
   }, []);
 
-  // Fetch tests from Server Backend on Mount
+  // 1. Check for Shared Test in URL on Mount (Direct Link received by student)
+  useEffect(() => {
+    const sharedTest = getSharedTestFromUrl();
+    if (sharedTest) {
+      setTests((prev) => {
+        const existsIndex = prev.findIndex((t) => t.id === sharedTest.id);
+        let updated;
+        if (existsIndex >= 0) {
+          updated = [...prev];
+          updated[existsIndex] = sharedTest;
+        } else {
+          updated = [sharedTest, ...prev];
+        }
+        saveStoredTests(updated);
+        return updated;
+      });
+      setActiveTestId(sharedTest.id);
+      showToast(
+        `New test received: "${sharedTest.title}" with ${sharedTest.questions?.length || 0} questions! Ready to take test.`,
+        "success"
+      );
+      cleanShareUrl();
+    }
+  }, [showToast]);
+
+  // 2. Fetch tests from Server Backend on Mount
   useEffect(() => {
     async function loadServerTests() {
       try {
         const res = await fetch("/api/tests");
         if (res.ok) {
-          const serverTests = await res.json();
-          if (Array.isArray(serverTests) && serverTests.length > 0) {
-            setTests(serverTests);
-            saveStoredTests(serverTests);
-            setActiveTestId((prev) =>
-              serverTests.some((t) => t.id === prev) ? prev : serverTests[0].id
-            );
-            setIsServerSynced(true);
-            return;
+          const contentType = res.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const serverTests = await res.json();
+            if (Array.isArray(serverTests) && serverTests.length > 0) {
+              setTests(serverTests);
+              saveStoredTests(serverTests);
+              setActiveTestId((prev) =>
+                serverTests.some((t) => t.id === prev) ? prev : serverTests[0].id
+              );
+              setIsServerSynced(true);
+              return;
+            }
           }
         }
       } catch (err) {
         console.warn("Could not connect to /api/tests, using local cache:", err);
       }
-      // If server empty or unreachable, sync local to server
-      const local = getStoredTests();
-      syncTestsToServer(local);
     }
 
     loadServerTests();
   }, []);
 
-  // Auto-sync tests with Server and LocalStorage
+  // Auto-sync tests with Server and LocalStorage (when Admin creates/modifies)
   const syncTestsToServer = async (updatedTests) => {
     saveStoredTests(updatedTests);
     try {
@@ -114,6 +144,23 @@ export default function App() {
       syncTestsToServer(INITIAL_TESTS);
       showToast("Default test series restored successfully.", "success");
     }
+  };
+
+  // Import test by code/link
+  const handleImportTest = (imported) => {
+    setTests((prev) => {
+      const idx = prev.findIndex((t) => t.id === imported.id);
+      let updated;
+      if (idx >= 0) {
+        updated = [...prev];
+        updated[idx] = imported;
+      } else {
+        updated = [imported, ...prev];
+      }
+      saveStoredTests(updated);
+      return updated;
+    });
+    setActiveTestId(imported.id);
   };
 
   // Student Flow Handlers
@@ -169,6 +216,8 @@ export default function App() {
             tests={tests}
             onStartTest={handleStartTest}
             onGoToAdmin={() => setCurrentView("admin")}
+            onShareTest={(test) => setShareModalTest(test)}
+            onOpenImport={() => setShowImportModal(true)}
           />
         )}
 
@@ -181,6 +230,7 @@ export default function App() {
             onUpdateTest={handleUpdateTest}
             onDeleteTest={handleDeleteTest}
             onResetDefaults={handleResetDefaults}
+            onShareTest={(test) => setShareModalTest(test)}
             showToast={showToast}
           />
         )}
@@ -201,6 +251,24 @@ export default function App() {
           />
         )}
       </div>
+
+      {/* Share Modal */}
+      {shareModalTest && (
+        <ShareModal
+          test={shareModalTest}
+          onClose={() => setShareModalTest(null)}
+          showToast={showToast}
+        />
+      )}
+
+      {/* Import Modal */}
+      {showImportModal && (
+        <ImportModal
+          onClose={() => setShowImportModal(false)}
+          onImportTest={handleImportTest}
+          showToast={showToast}
+        />
+      )}
 
       {/* Toast Notification */}
       <Toast toast={toast} onClose={() => setToast(null)} />
