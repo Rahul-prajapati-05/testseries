@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Navbar from "./components/Navbar";
 import Toast from "./components/Toast";
 import AdminPanel from "./components/Admin/AdminPanel";
@@ -15,6 +15,7 @@ import {
 export default function App() {
   const [tests, setTests] = useState(() => getStoredTests());
   const [activeTestId, setActiveTestId] = useState(() => tests[0]?.id || "");
+  const [isServerSynced, setIsServerSynced] = useState(false);
   
   // Views: "student" | "admin" | "exam" | "result"
   const [currentView, setCurrentView] = useState("student");
@@ -27,28 +28,71 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [showHelpModal, setShowHelpModal] = useState(false);
 
-  // Auto-save tests to LocalStorage whenever modified
-  useEffect(() => {
-    saveStoredTests(tests);
-  }, [tests]);
-
-  const showToast = (message, type = "info") => {
+  const showToast = useCallback((message, type = "info") => {
     setToast({ message, type });
     setTimeout(() => {
       setToast((prev) => (prev?.message === message ? null : prev));
     }, 4000);
+  }, []);
+
+  // Fetch tests from Server Backend on Mount
+  useEffect(() => {
+    async function loadServerTests() {
+      try {
+        const res = await fetch("/api/tests");
+        if (res.ok) {
+          const serverTests = await res.json();
+          if (Array.isArray(serverTests) && serverTests.length > 0) {
+            setTests(serverTests);
+            saveStoredTests(serverTests);
+            setActiveTestId((prev) =>
+              serverTests.some((t) => t.id === prev) ? prev : serverTests[0].id
+            );
+            setIsServerSynced(true);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn("Could not connect to /api/tests, using local cache:", err);
+      }
+      // If server empty or unreachable, sync local to server
+      const local = getStoredTests();
+      syncTestsToServer(local);
+    }
+
+    loadServerTests();
+  }, []);
+
+  // Auto-sync tests with Server and LocalStorage
+  const syncTestsToServer = async (updatedTests) => {
+    saveStoredTests(updatedTests);
+    try {
+      const res = await fetch("/api/tests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedTests),
+      });
+      if (res.ok) {
+        setIsServerSynced(true);
+      }
+    } catch (err) {
+      console.warn("Failed to sync tests to server:", err);
+      setIsServerSynced(false);
+    }
   };
 
   // Test Series CRUD Handlers
   const handleCreateTest = (newTest) => {
-    setTests((prev) => [newTest, ...prev]);
+    const updated = [newTest, ...tests];
+    setTests(updated);
     setActiveTestId(newTest.id);
+    syncTestsToServer(updated);
   };
 
   const handleUpdateTest = (updatedTest) => {
-    setTests((prev) =>
-      prev.map((t) => (t.id === updatedTest.id ? updatedTest : t))
-    );
+    const updated = tests.map((t) => (t.id === updatedTest.id ? updatedTest : t));
+    setTests(updated);
+    syncTestsToServer(updated);
   };
 
   const handleDeleteTest = (testId) => {
@@ -59,6 +103,7 @@ export default function App() {
     const remaining = tests.filter((t) => t.id !== testId);
     setTests(remaining);
     setActiveTestId(remaining[0].id);
+    syncTestsToServer(remaining);
     showToast("Test series removed successfully.", "info");
   };
 
@@ -66,12 +111,17 @@ export default function App() {
     if (window.confirm("Are you sure you want to reset all test series to the default configuration?")) {
       setTests(INITIAL_TESTS);
       setActiveTestId(INITIAL_TESTS[0].id);
+      syncTestsToServer(INITIAL_TESTS);
       showToast("Default test series restored successfully.", "success");
     }
   };
 
   // Student Flow Handlers
   const handleStartTest = (test) => {
+    if (!test.questions || test.questions.length === 0) {
+      showToast("This test series currently has no questions. Please add questions in the Admin panel.", "error");
+      return;
+    }
     setActiveExamTest(test);
     setCurrentView("exam");
   };
@@ -104,10 +154,9 @@ export default function App() {
             setCurrentView(view);
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
-          totalTests={tests.length}
+          isServerSynced={isServerSynced}
           onNewTestClick={() => {
             setCurrentView("admin");
-            // The Admin panel will handle opening new test modal or tab
           }}
           onHelpClick={() => setShowHelpModal(true)}
         />

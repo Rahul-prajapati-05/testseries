@@ -1,7 +1,7 @@
 import React from "react";
-import { BookOpen, ShieldCheck, UserCheck, HelpCircle, PlusCircle } from "lucide-react";
+import { BookOpen, ShieldCheck, UserCheck, HelpCircle, PlusCircle, Cloud, CloudOff } from "lucide-react";
 
-export default function Navbar({ currentView, onViewChange, onNewTestClick, onHelpClick }) {
+export default function Navbar({ currentView, onViewChange, isServerSynced, onNewTestClick, onHelpClick }) {
   return (
     <header className="app-header">
       <div className="header-container">
@@ -21,6 +21,15 @@ export default function Navbar({ currentView, onViewChange, onNewTestClick, onHe
 
         {/* View Switcher & Action Tabs */}
         <div className="header-actions">
+          {/* Cloud Sync Status Indicator */}
+          <div
+            className={`sync-status-indicator ${isServerSynced ? "synced" : "local-only"}`}
+            title={isServerSynced ? "Server Cloud Database Connected (Changes sync to all students)" : "Local Storage Mode"}
+          >
+            {isServerSynced ? <Cloud size={15} /> : <CloudOff size={15} />}
+            <span className="hidden-sm">{isServerSynced ? "Cloud Synced" : "Local Mode"}</span>
+          </div>
+
           <div className="view-toggle-pill">
             <button
               type="button"

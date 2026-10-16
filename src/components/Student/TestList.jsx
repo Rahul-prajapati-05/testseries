@@ -5,17 +5,24 @@ import {
   Search,
   Sparkles,
   FileQuestion,
-  Play
+  Play,
+  PlusCircle,
+  AlertCircle
 } from "lucide-react";
 
 export default function TestList({ tests, onStartTest, onGoToAdmin }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
-  const categories = ["All", ...new Set(tests.map((t) => t.category || "General"))];
+  const categories = [
+    "All",
+    ...new Set(tests.map((t) => (t.category ? t.category.trim() : "General"))),
+  ];
 
   const filteredTests = tests.filter((t) => {
-    const matchesCategory = selectedCategory === "All" || t.category === selectedCategory;
+    const testCat = (t.category || "General").trim().toLowerCase();
+    const activeCat = selectedCategory.trim().toLowerCase();
+    const matchesCategory = selectedCategory === "All" || testCat === activeCat;
     const matchesSearch =
       t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -97,12 +104,21 @@ export default function TestList({ tests, onStartTest, onGoToAdmin }) {
         ) : (
           <div className="tests-card-grid">
             {filteredTests.map((test) => {
-              const totalMarks = (test.questions?.length || 0) * (test.positiveMarks || 1);
+              const qCount = test.questions?.length || 0;
+              const totalMarks = qCount * (test.positiveMarks || 1);
+              const hasQuestions = qCount > 0;
+
               return (
                 <div key={test.id} className="test-catalog-card">
                   <div className="test-card-top">
                     <span className="category-tag">{test.category || "General"}</span>
-                    <span className="live-status-pill">Active</span>
+                    {hasQuestions ? (
+                      <span className="live-status-pill">Active</span>
+                    ) : (
+                      <span className="draft-status-pill">
+                        <AlertCircle size={12} /> Needs Questions
+                      </span>
+                    )}
                   </div>
 
                   <h3 className="test-card-title">{test.title}</h3>
@@ -113,7 +129,7 @@ export default function TestList({ tests, onStartTest, onGoToAdmin }) {
                   <div className="test-card-meta">
                     <div className="meta-stat">
                       <FileQuestion size={16} />
-                      <span><strong>{test.questions?.length || 0}</strong> Questions</span>
+                      <span><strong>{qCount}</strong> Questions</span>
                     </div>
                     <div className="meta-stat">
                       <Clock size={16} />
@@ -131,19 +147,26 @@ export default function TestList({ tests, onStartTest, onGoToAdmin }) {
                   </div>
 
                   <div className="test-card-footer">
-                    <button
-                      type="button"
-                      className="btn-start-test"
-                      onClick={() => onStartTest(test)}
-                      disabled={!test.questions || test.questions.length === 0}
-                    >
-                      <Play size={16} fill="currentColor" />
-                      <span>
-                        {test.questions && test.questions.length > 0
-                          ? "Start Test"
-                          : "No Questions Available"}
-                      </span>
-                    </button>
+                    {hasQuestions ? (
+                      <button
+                        type="button"
+                        className="btn-start-test"
+                        onClick={() => onStartTest(test)}
+                      >
+                        <Play size={16} fill="currentColor" />
+                        <span>Start Test</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        className="btn-start-test btn-add-questions-cta"
+                        onClick={onGoToAdmin}
+                        title="Go to Admin Panel to add questions to this test"
+                      >
+                        <PlusCircle size={16} />
+                        <span>Add Questions in Admin</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               );
