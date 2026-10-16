@@ -65,7 +65,7 @@ export default function App() {
     }
   }, [showToast]);
 
-  // 2. Fetch tests from Server Backend on Mount
+  // 2. Fetch tests from Server Backend on Mount & Merge safely with local tests
   useEffect(() => {
     async function loadServerTests() {
       try {
@@ -75,12 +75,35 @@ export default function App() {
           if (contentType && contentType.includes("application/json")) {
             const serverTests = await res.json();
             if (Array.isArray(serverTests) && serverTests.length > 0) {
-              setTests(serverTests);
-              saveStoredTests(serverTests);
+              const localTests = getStoredTests();
+              const mergedMap = new Map();
+
+              // First add server tests
+              serverTests.forEach((t) => {
+                if (t && t.id) mergedMap.set(t.id, t);
+              });
+
+              // Also preserve any custom tests that were created locally by the admin
+              let hasUnsyncedLocal = false;
+              localTests.forEach((t) => {
+                if (t && t.id && !mergedMap.has(t.id)) {
+                  mergedMap.set(t.id, t);
+                  hasUnsyncedLocal = true;
+                }
+              });
+
+              const merged = Array.from(mergedMap.values());
+              setTests(merged);
+              saveStoredTests(merged);
               setActiveTestId((prev) =>
-                serverTests.some((t) => t.id === prev) ? prev : serverTests[0].id
+                merged.some((t) => t.id === prev) ? prev : merged[0].id
               );
               setIsServerSynced(true);
+
+              // If admin had a local test that wasn't on server yet, upload it now
+              if (hasUnsyncedLocal) {
+                syncTestsToServer(merged);
+              }
               return;
             }
           }
