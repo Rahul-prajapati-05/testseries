@@ -1,0 +1,208 @@
+// Initial mock test series data in English with 4 options and 5th correct option selector
+export const INITIAL_TESTS = [
+  {
+    id: "test-cgl-gk-01",
+    title: "General Awareness & Science Mock Championship 2026",
+    category: "General Knowledge",
+    durationMinutes: 15,
+    positiveMarks: 2,
+    negativeMarks: 0.5,
+    description: "Comprehensive practice test covering General Science, World Geography, Indian Polity, and History.",
+    questions: [
+      {
+        id: "q-101",
+        text: "Which of the following metals remains in liquid state at normal room temperature?",
+        options: [
+          "Sodium",
+          "Mercury",
+          "Potassium",
+          "Bromine"
+        ],
+        correctOption: 1, // 0 = A, 1 = B, 2 = C, 3 = D
+        explanation: "Mercury (Hg) is the only metal that is liquid at standard room temperature. Bromine is a liquid at room temperature, but it is a non-metal."
+      },
+      {
+        id: "q-102",
+        text: "Which layer of the Earth's atmosphere is home to almost all weather phenomena like clouds and rain?",
+        options: [
+          "Stratosphere",
+          "Troposphere",
+          "Mesosphere",
+          "Thermosphere"
+        ],
+        correctOption: 1, // B
+        explanation: "The troposphere is the lowest atmospheric layer containing roughly 75% of the atmosphere's mass and almost all water vapor, causing all weather events."
+      },
+      {
+        id: "q-103",
+        text: "Which cell organelle is widely known as the 'Powerhouse of the Cell'?",
+        options: [
+          "Ribosome",
+          "Mitochondria",
+          "Golgi Apparatus",
+          "Lysosome"
+        ],
+        correctOption: 1, // B
+        explanation: "Mitochondria produce cellular energy in the form of ATP (adenosine triphosphate) through aerobic respiration, earning the title 'Powerhouse of the Cell'."
+      },
+      {
+        id: "q-104",
+        text: "What is the primary function of the Central Processing Unit (CPU) in a computer?",
+        options: [
+          "To provide permanent secondary storage",
+          "To execute instructions and perform calculations",
+          "To display high-resolution graphics only",
+          "To supply electrical power to components"
+        ],
+        correctOption: 1, // B
+        explanation: "The CPU is the central brain of a computer system that fetches, decodes, and executes program instructions and mathematical operations."
+      },
+      {
+        id: "q-105",
+        text: "On which date is International Yoga Day celebrated globally every year?",
+        options: [
+          "June 5",
+          "June 21",
+          "August 15",
+          "December 1"
+        ],
+        correctOption: 1, // B
+        explanation: "International Yoga Day is observed worldwide annually on June 21, established by the United Nations General Assembly in 2014."
+      }
+    ]
+  },
+  {
+    id: "test-reasoning-02",
+    title: "Logical Reasoning & Mental Ability Speed Test",
+    category: "Reasoning",
+    durationMinutes: 10,
+    positiveMarks: 1,
+    negativeMarks: 0.25,
+    description: "Speed test testing Coding-Decoding, Number Series, Analogies, and Deductive Reasoning.",
+    questions: [
+      {
+        id: "q-201",
+        text: "Find the missing number in the given sequence: 2, 6, 12, 20, 30, ?",
+        options: [
+          "40",
+          "42",
+          "44",
+          "46"
+        ],
+        correctOption: 1, // B (42)
+        explanation: "Pattern: The differences between consecutive numbers increase by 2: +4, +6, +8, +10, so the next difference is +12. Thus, 30 + 12 = 42 (or n * (n+1): 1x2=2, 2x3=6, 3x4=12, 4x5=20, 5x6=30, 6x7=42)."
+      },
+      {
+        id: "q-202",
+        text: "In a certain code language, if 'CAT' is coded as '3120', how will 'DOG' be coded?",
+        options: [
+          "4157",
+          "4147",
+          "4158",
+          "3157"
+        ],
+        correctOption: 0, // A
+        explanation: "Each letter is represented by its alphabetical positional rank: C=3, A=1, T=20 -> 3120. Similarly, D=4, O=15, G=7 -> 4157."
+      },
+      {
+        id: "q-203",
+        text: "Select the odd one out from the given four options:",
+        options: [
+          "Carrot",
+          "Potato",
+          "Ginger",
+          "Tomato"
+        ],
+        correctOption: 3, // D
+        explanation: "Carrot, Potato, and Ginger all grow underground as roots/tubers/rhizomes, whereas Tomato grows above ground and is botanically a fruit."
+      },
+      {
+        id: "q-204",
+        text: "Pointing to a photograph, Rohit said, 'She is the only daughter of my grandfather's only son.' How is Rohit related to the girl?",
+        options: [
+          "Father",
+          "Brother",
+          "Cousin",
+          "Uncle"
+        ],
+        correctOption: 1, // B
+        explanation: "Rohit's grandfather's only son is Rohit's father. The only daughter of Rohit's father is Rohit's sister. Therefore, Rohit is her brother."
+      }
+    ]
+  },
+  {
+    id: "test-computer-03",
+    title: "Computer Science & IT Fundamentals Test",
+    category: "Computer Science",
+    durationMinutes: 12,
+    positiveMarks: 1,
+    negativeMarks: 0.25,
+    description: "Core test covering Computer Memory, Operating Systems, Networking, and Web Technologies.",
+    questions: [
+      {
+        id: "q-301",
+        text: "Which of the following computer memories is volatile in nature?",
+        options: [
+          "ROM (Read Only Memory)",
+          "RAM (Random Access Memory)",
+          "Hard Disk Drive",
+          "Flash USB Drive"
+        ],
+        correctOption: 1, // B
+        explanation: "RAM is volatile memory; it requires electrical power to retain its state and loses all stored data when the system is powered off."
+      },
+      {
+        id: "q-302",
+        text: "What does HTML stand for in web development?",
+        options: [
+          "High Text Markup Language",
+          "Hyper Text Markup Language",
+          "Hyperlink and Text Management Language",
+          "Home Tool Markup Language"
+        ],
+        correctOption: 1, // B
+        explanation: "HTML stands for 'Hyper Text Markup Language'. It is the standard markup language used to structure web pages on the World Wide Web."
+      },
+      {
+        id: "q-303",
+        text: "How many Megabytes (MB) make up exactly 1 Gigabyte (GB) in standard binary computing?",
+        options: [
+          "1000 MB",
+          "1024 MB",
+          "1048 MB",
+          "512 MB"
+        ],
+        correctOption: 1, // B
+        explanation: "In binary computing architecture, 1 Gigabyte (GB) = 1024 Megabytes (MB), and 1 MB = 1024 Kilobytes (KB)."
+      }
+    ]
+  }
+];
+
+export const STORAGE_KEY_TESTS = "pariksha_pro_tests_v2";
+export const STORAGE_KEY_RESULTS = "pariksha_pro_results_v2";
+
+// Helper to load tests from LocalStorage with fallback
+export function getStoredTests() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY_TESTS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed;
+      }
+    }
+  } catch (err) {
+    console.error("Error loading tests from localStorage:", err);
+  }
+  return INITIAL_TESTS;
+}
+
+// Helper to save tests to LocalStorage
+export function saveStoredTests(tests) {
+  try {
+    localStorage.setItem(STORAGE_KEY_TESTS, JSON.stringify(tests));
+  } catch (err) {
+    console.error("Error saving tests to localStorage:", err);
+  }
+}
