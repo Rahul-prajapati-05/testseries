@@ -1,7 +1,14 @@
 import React from "react";
-import { BookOpen, ShieldCheck, UserCheck, HelpCircle, PlusCircle, Cloud, CloudOff } from "lucide-react";
+import { BookOpen, ShieldCheck, UserCheck, HelpCircle, PlusCircle, Cloud, CloudOff, Share2 } from "lucide-react";
 
-export default function Navbar({ currentView, onViewChange, isServerSynced, onNewTestClick, onHelpClick }) {
+export default function Navbar({
+  currentView,
+  onViewChange,
+  isServerSynced,
+  onNewTestClick,
+  onHelpClick,
+  onShareWebsiteClick
+}) {
   return (
     <header className="app-header">
       <div className="header-container">
@@ -60,6 +67,16 @@ export default function Navbar({ currentView, onViewChange, isServerSynced, onNe
               <span>Create New Test</span>
             </button>
           )}
+
+          <button
+            type="button"
+            className="btn-share-header"
+            onClick={onShareWebsiteClick}
+            title="Share website link with all tests (WhatsApp & Direct Link)"
+          >
+            <Share2 size={16} />
+            <span>Share Website</span>
+          </button>
 
           <button
             type="button"

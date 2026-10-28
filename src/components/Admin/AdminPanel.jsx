@@ -31,6 +31,7 @@ export default function AdminPanel({
   onDeleteTest,
   onResetDefaults,
   onShareTest,
+  onSharePortal,
   showToast,
 }) {
   const activeTest = tests.find((t) => t.id === activeTestId) || tests[0];
@@ -320,6 +321,15 @@ export default function AdminPanel({
           </div>
 
           <div className="admin-header-actions">
+            <button
+              type="button"
+              className="btn-share-portal-header"
+              onClick={onSharePortal}
+              title="Share entire website link containing all manual and custom tests"
+            >
+              <Share2 size={16} />
+              <span>Share Entire Portal</span>
+            </button>
             {activeTest && (
               <button
                 type="button"

@@ -1,6 +1,29 @@
 // Initial mock test series data in English with 4 options and 5th correct option selector
 export const INITIAL_TESTS = [
   {
+    id: "test-1792172104880",
+    title: "ssc",
+    category: "General",
+    durationMinutes: 1,
+    positiveMarks: 4,
+    negativeMarks: 1,
+    description: "Standard Mock Test Series",
+    questions: [
+      {
+        id: "q-1792172283681-bxud",
+        text: "एक वस्तु का क्रय मूल्य ₹500 है और विक्रय मूल्य ₹600 है। लाभ प्रतिशत कितना है?",
+        options: [
+          "10",
+          "20",
+          "30",
+          "40"
+        ],
+        correctOption: 1, // B (20%)
+        explanation: "क्रय मूल्य = ₹500, विक्रय मूल्य = ₹600। लाभ = 600 - 500 = ₹100। लाभ प्रतिशत = (100 / 500) × 100 = 20%."
+      }
+    ]
+  },
+  {
     id: "test-cgl-gk-01",
     title: "General Awareness & Science Mock Championship 2026",
     category: "General Knowledge",
@@ -189,6 +212,14 @@ export function getStoredTests() {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) {
+        // Merge any new default tests that are not yet in the user's cached storage
+        const existingIds = new Set(parsed.map((t) => t.id));
+        const missingDefaults = INITIAL_TESTS.filter((t) => !existingIds.has(t.id));
+        if (missingDefaults.length > 0) {
+          const merged = [...parsed, ...missingDefaults];
+          localStorage.setItem(STORAGE_KEY_TESTS, JSON.stringify(merged));
+          return merged;
+        }
         return parsed;
       }
     }

@@ -12,7 +12,14 @@ import {
   Download
 } from "lucide-react";
 
-export default function TestList({ tests, onStartTest, onGoToAdmin, onShareTest, onOpenImport }) {
+export default function TestList({
+  tests,
+  onStartTest,
+  onGoToAdmin,
+  onShareTest,
+  onOpenImport,
+  onSharePortal
+}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
@@ -82,6 +89,15 @@ export default function TestList({ tests, onStartTest, onGoToAdmin, onShareTest,
             <p className="catalog-subtitle">Select any mock test to assess your readiness, or import a shared test</p>
           </div>
           <div className="catalog-action-buttons">
+            <button
+              type="button"
+              className="btn-outline-small"
+              onClick={onSharePortal}
+              title="Share entire website link with all tests (WhatsApp & Direct Link)"
+            >
+              <Share2 size={16} />
+              <span>Share Website</span>
+            </button>
             <button
               type="button"
               className="btn-outline-small"

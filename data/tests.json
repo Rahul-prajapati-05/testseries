@@ -1,5 +1,28 @@
 [
   {
+    "id": "test-1792172104880",
+    "title": "ssc",
+    "category": "General",
+    "durationMinutes": 1,
+    "positiveMarks": 4,
+    "negativeMarks": 1,
+    "description": "Standard Mock Test Series",
+    "questions": [
+      {
+        "id": "q-1792172283681-bxud",
+        "text": "एक वस्तु का क्रय मूल्य ₹500 है और विक्रय मूल्य ₹600 है। लाभ प्रतिशत कितना है?",
+        "options": [
+          "10",
+          "20",
+          "30",
+          "40"
+        ],
+        "correctOption": 1,
+        "explanation": ""
+      }
+    ]
+  },
+  {
     "id": "test-cgl-gk-01",
     "title": "General Awareness & Science Mock Championship 2026",
     "category": "General Knowledge",

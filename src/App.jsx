@@ -13,7 +13,11 @@ import {
   getStoredTests,
   saveStoredTests,
 } from "./data/mockData";
-import { getSharedTestFromUrl, cleanShareUrl } from "./utils/shareHelper";
+import {
+  getSharedTestFromUrl,
+  getSharedCatalogFromUrl,
+  cleanShareUrl,
+} from "./utils/shareHelper";
 
 export default function App() {
   const [tests, setTests] = useState(() => getStoredTests());
@@ -30,7 +34,7 @@ export default function App() {
   // Modals state
   const [toast, setToast] = useState(null);
   const [showHelpModal, setShowHelpModal] = useState(false);
-  const [shareModalTest, setShareModalTest] = useState(null);
+  const [shareModalTest, setShareModalTest] = useState(null); // test object or "catalog"
   const [showImportModal, setShowImportModal] = useState(false);
 
   const showToast = useCallback((message, type = "info") => {
@@ -40,34 +44,74 @@ export default function App() {
     }, 4500);
   }, []);
 
-  // 1. Check for Shared Test in URL on Mount (Direct Link received by student)
-  useEffect(() => {
-    const sharedTest = getSharedTestFromUrl();
-    if (sharedTest) {
-      setTests((prev) => {
-        const existsIndex = prev.findIndex((t) => t.id === sharedTest.id);
-        let updated;
-        if (existsIndex >= 0) {
-          updated = [...prev];
-          updated[existsIndex] = sharedTest;
-        } else {
-          updated = [sharedTest, ...prev];
-        }
-        saveStoredTests(updated);
-        return updated;
+  // Auto-sync tests with Server and LocalStorage (when Admin creates/modifies)
+  const syncTestsToServer = useCallback(async (updatedTests) => {
+    saveStoredTests(updatedTests);
+    try {
+      const res = await fetch("/api/tests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedTests),
       });
-      setActiveTestId(sharedTest.id);
-      showToast(
-        `New test received: "${sharedTest.title}" with ${sharedTest.questions?.length || 0} questions! Ready to take test.`,
-        "success"
-      );
-      cleanShareUrl();
+      if (res.ok) {
+        setIsServerSynced(true);
+      }
+    } catch (err) {
+      console.warn("Failed to sync tests to server:", err);
+      setIsServerSynced(false);
     }
-  }, [showToast]);
+  }, []);
 
-  // 2. Fetch tests from Server Backend on Mount & Merge safely with local tests
+  // Initialize tests from URL parameters (shared links) and Server Backend
   useEffect(() => {
-    async function loadServerTests() {
+    async function initializeAndSyncTests() {
+      let currentTests = getStoredTests();
+      let hasUrlUpdates = false;
+
+      // 1. Check for shared catalog in URL (?catalog=...)
+      const sharedCatalog = getSharedCatalogFromUrl();
+      if (sharedCatalog && sharedCatalog.length > 0) {
+        const map = new Map();
+        currentTests.forEach((t) => {
+          if (t && t.id) map.set(t.id, t);
+        });
+        sharedCatalog.forEach((t) => {
+          if (t && t.id) map.set(t.id, t);
+        });
+        currentTests = Array.from(map.values());
+        hasUrlUpdates = true;
+        showToast(
+          `Loaded ${sharedCatalog.length} tests from shared website link!`,
+          "success"
+        );
+        cleanShareUrl();
+      }
+
+      // 2. Check for single shared test in URL (?shareTest=...)
+      const sharedTest = getSharedTestFromUrl();
+      if (sharedTest && sharedTest.id) {
+        const map = new Map();
+        currentTests.forEach((t) => {
+          if (t && t.id) map.set(t.id, t);
+        });
+        map.set(sharedTest.id, sharedTest);
+        currentTests = Array.from(map.values());
+        setActiveTestId(sharedTest.id);
+        hasUrlUpdates = true;
+        showToast(
+          `New test received: "${sharedTest.title}" with ${sharedTest.questions?.length || 0} questions! Ready to take test.`,
+          "success"
+        );
+        cleanShareUrl();
+      }
+
+      // If we got tests from URL, save immediately
+      if (hasUrlUpdates) {
+        setTests(currentTests);
+        saveStoredTests(currentTests);
+      }
+
+      // 3. Connect to Server Backend (/api/tests)
       try {
         const res = await fetch("/api/tests");
         if (res.ok) {
@@ -75,7 +119,6 @@ export default function App() {
           if (contentType && contentType.includes("application/json")) {
             const serverTests = await res.json();
             if (Array.isArray(serverTests) && serverTests.length > 0) {
-              const localTests = getStoredTests();
               const mergedMap = new Map();
 
               // First add server tests
@@ -83,9 +126,9 @@ export default function App() {
                 if (t && t.id) mergedMap.set(t.id, t);
               });
 
-              // Also preserve any custom tests that were created locally by the admin
+              // Preserve any custom tests created locally or loaded from URL
               let hasUnsyncedLocal = false;
-              localTests.forEach((t) => {
+              currentTests.forEach((t) => {
                 if (t && t.id && !mergedMap.has(t.id)) {
                   mergedMap.set(t.id, t);
                   hasUnsyncedLocal = true;
@@ -109,30 +152,12 @@ export default function App() {
           }
         }
       } catch (err) {
-        console.warn("Could not connect to /api/tests, using local cache:", err);
+        console.warn("Could not connect to /api/tests, running in local storage mode:", err);
       }
     }
 
-    loadServerTests();
-  }, []);
-
-  // Auto-sync tests with Server and LocalStorage (when Admin creates/modifies)
-  const syncTestsToServer = async (updatedTests) => {
-    saveStoredTests(updatedTests);
-    try {
-      const res = await fetch("/api/tests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedTests),
-      });
-      if (res.ok) {
-        setIsServerSynced(true);
-      }
-    } catch (err) {
-      console.warn("Failed to sync tests to server:", err);
-      setIsServerSynced(false);
-    }
-  };
+    initializeAndSyncTests();
+  }, [showToast, syncTestsToServer]);
 
   // Test Series CRUD Handlers
   const handleCreateTest = (newTest) => {
@@ -169,8 +194,28 @@ export default function App() {
     }
   };
 
-  // Import test by code/link
+  // Import test by code/link or catalog
   const handleImportTest = (imported) => {
+    if (Array.isArray(imported)) {
+      setTests((prev) => {
+        const map = new Map();
+        prev.forEach((t) => {
+          if (t && t.id) map.set(t.id, t);
+        });
+        imported.forEach((t) => {
+          if (t && t.id) map.set(t.id, t);
+        });
+        const updated = Array.from(map.values());
+        saveStoredTests(updated);
+        syncTestsToServer(updated);
+        return updated;
+      });
+      if (imported.length > 0 && imported[0].id) {
+        setActiveTestId(imported[0].id);
+      }
+      return;
+    }
+
     setTests((prev) => {
       const idx = prev.findIndex((t) => t.id === imported.id);
       let updated;
@@ -181,6 +226,7 @@ export default function App() {
         updated = [imported, ...prev];
       }
       saveStoredTests(updated);
+      syncTestsToServer(updated);
       return updated;
     });
     setActiveTestId(imported.id);
@@ -229,6 +275,7 @@ export default function App() {
             setCurrentView("admin");
           }}
           onHelpClick={() => setShowHelpModal(true)}
+          onShareWebsiteClick={() => setShareModalTest("catalog")}
         />
       )}
 
@@ -241,6 +288,7 @@ export default function App() {
             onGoToAdmin={() => setCurrentView("admin")}
             onShareTest={(test) => setShareModalTest(test)}
             onOpenImport={() => setShowImportModal(true)}
+            onSharePortal={() => setShareModalTest("catalog")}
           />
         )}
 
@@ -254,6 +302,7 @@ export default function App() {
             onDeleteTest={handleDeleteTest}
             onResetDefaults={handleResetDefaults}
             onShareTest={(test) => setShareModalTest(test)}
+            onSharePortal={() => setShareModalTest("catalog")}
             showToast={showToast}
           />
         )}
@@ -278,7 +327,9 @@ export default function App() {
       {/* Share Modal */}
       {shareModalTest && (
         <ShareModal
-          test={shareModalTest}
+          test={shareModalTest === "catalog" ? null : shareModalTest}
+          allTests={tests}
+          initialTab={shareModalTest === "catalog" ? "catalog" : "single"}
           onClose={() => setShareModalTest(null)}
           showToast={showToast}
         />
