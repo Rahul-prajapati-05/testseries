@@ -1,6 +1,11 @@
 services:
   - type: web
-    name: testseries
-    env: node
+    name: parikshapro-testseries
+    runtime: node
+    plan: free
     buildCommand: npm install && npm run build
     startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.19.2
+
